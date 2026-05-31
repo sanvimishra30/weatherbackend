@@ -1,4 +1,7 @@
 const express = require('express');
+
+
+const Weather = require("../models/weather");
 const router = express.Router();
 const {
   getAllWeather,
@@ -6,7 +9,7 @@ const {
   createWeather,
   updateWeather,
   deleteWeather,
-} = require('../controllers/weatherController');
+} = require('../controllers/weather');
 
 router.get('/',          getAllWeather);
 router.get('/:city',     getWeatherByCity);
