@@ -12,7 +12,11 @@ connectDB();
 
 console.log("After DB connection");
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type"],
+}));
 app.use(express.json());
 
 app.get("/", (req, res) => {

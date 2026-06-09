@@ -11,10 +11,16 @@ const {
   deleteWeather,
 } = require('../controllers/weather');
 
+const {
+  createWeatherRules,
+  updateWeatherRules,
+} = require("../middleware/weatherValidation");
+
+
 router.get('/',          getAllWeather);
 router.get('/:city',     getWeatherByCity);
-router.post('/',         createWeather);
-router.put('/:city',     updateWeather);
+router.post('/',         createWeatherRules,createWeather);
+router.put('/:city',     updateWeatherRules,updateWeather);
 router.delete('/:city',  deleteWeather);
 
 module.exports = router;
