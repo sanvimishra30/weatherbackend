@@ -1,22 +1,23 @@
+require("dotenv").config();// this line loads environment variables from a .env file into process.env, allowing you to access them in your code using process.env.VARIABLE_NAME
+
 const express = require("express");
 const cors = require("cors");
+const connectDB = require("./config/db");
+const { connectRedis } = require("./config/redis");
 const weatherRoutes = require("./routes/weatherRoutes");
-require("dotenv").config();
-const connectDB = require("./connection");
-const { connect } = require("mongoose");
 
 const app = express();
-console.log("Before DB connection");
 
 connectDB();
-
-console.log("After DB connection");
+connectRedis();
 
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"],
 }));
+
+
 app.use(express.json());
 
 app.get("/", (req, res) => {

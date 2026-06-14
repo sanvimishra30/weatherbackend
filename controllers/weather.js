@@ -1,116 +1,144 @@
-// controllers/weather.js
+const {
+  fetchAllWeather,
+  fetchWeatherByCity,
+  createWeatherRecord,
+  updateWeatherRecord,
+  deleteWeatherRecord,
+} = require("../services/weatherservice");
 
-const Weather = require("../models/weather");
+const { checkValidation } = require("../middleware/weatherValidation");
 
+
+// GET /api/weather
 const getAllWeather = async (req, res) => {
-    try {
-        const allWeather = await Weather.find();
-        res.status(200).json({
-            message: "Get all weather data",
-            data: allWeather
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
-    }
+  try {
+    const { data, fromCache } = await fetchAllWeather();
+
+    res.status(200).json({
+      success: true,
+      message: "All weather records fetched",
+      fromCache,
+      count: data.length,
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch weather data" });
+  }
 };
 
+
+// GET /api/weather/:city
 const getWeatherByCity = async (req, res) => {
-    try {
-        const { city } = req.params;
-        const weather = await Weather.findOne({ city: city.toLowerCase() });
-        
-        if (!weather) {
-            return res.status(404).json({
-                message: `Weather for ${city} not found`
-            });
-        }
+  try {
+    const city   = req.params.city.toLowerCase();
+    const result = await fetchWeatherByCity(city);
 
-        res.status(200).json({
-            message: `Weather for ${city}`,
-            data: weather
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
+    // Service returns null when city not found
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: `No weather data found for "${req.params.city}"`,
+      });
     }
+
+    res.status(200).json({
+      success: true,
+      message: `Weather for "${req.params.city}"`,
+      fromCache: result.fromCache,
+      data: result.data,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch weather data" });
+  }
 };
 
+
+// POST /api/weather
 const createWeather = async (req, res) => {
-    try {
-        const weatherData = req.body;
-        
-        const weather = new Weather(weatherData);
-        await weather.save();
+  const failed = checkValidation(req, res);
+  if (failed) return;
 
-        res.status(201).json({
-            message: "Weather created successfully",
-            data: weather
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
+  try {
+    const weather = await createWeatherRecord(req.body);
+
+    res.status(201).json({
+      success: true,
+      message: "Weather record created",
+      data: weather,
+    });
+  } catch (error) {
+    // Duplicate city — MongoDB error code 11000
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: `A weather record for "${req.body.city}" already exists`,
+      });
     }
+    res.status(500).json({ success: false, message: "Failed to create weather record" });
+  }
 };
 
+
+// PUT /api/weather/:city
 const updateWeather = async (req, res) => {
-    try {
-        const { city } = req.params;
-        const updatedData = req.body;
+  const failed = checkValidation(req, res);
+  if (failed) return;
 
-        const weather = await Weather.findOneAndUpdate(
-            { city: city.toLowerCase() },
-            updatedData,
-            { new: true, runValidators: true }
-        );
+  try {
+    const city    = req.params.city.toLowerCase();
+    const weather = await updateWeatherRecord(city, req.body);
 
-        if (!weather) {
-            return res.status(404).json({
-                message: `Weather for ${city} not found`
-            });
-        }
-
-        res.status(200).json({
-            message: `Weather updated for ${city}`,
-            data: weather
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
+    // Service returns null when city not found
+    if (!weather) {
+      return res.status(404).json({
+        success: false,
+        message: `No weather data found for "${req.params.city}"`,
+      });
     }
+
+    res.status(200).json({
+      success: true,
+      message: `Weather record for "${req.params.city}" updated`,
+      data: weather,
+    });
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((e) => e.message);
+      return res.status(400).json({ success: false, message: messages.join(", ") });
+    }
+    res.status(500).json({ success: false, message: "Failed to update weather record" });
+  }
 };
 
+
+// DELETE /api/weather/:city
 const deleteWeather = async (req, res) => {
-    try {
-        const { city } = req.params;
+  try {
+    const city    = req.params.city.toLowerCase();
+    const weather = await deleteWeatherRecord(city);
 
-        const weather = await Weather.findOneAndDelete({ city: city.toLowerCase() });
-
-        if (!weather) {
-            return res.status(404).json({
-                message: `Weather for ${city} not found`
-            });
-        }
-
-        res.status(200).json({
-            message: `Weather deleted for ${city}`,
-            data: weather
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
+    // Service returns null when city not found
+    if (!weather) {
+      return res.status(404).json({
+        success: false,
+        message: `No weather data found for "${req.params.city}"`,
+      });
     }
+
+    res.status(200).json({
+      success: true,
+      message: `Weather record for "${req.params.city}" deleted`,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to delete weather record" });
+  }
 };
+
 
 module.exports = {
-    getAllWeather,
-    getWeatherByCity,
-    createWeather,
-    updateWeather,
-    deleteWeather
+  getAllWeather,
+  getWeatherByCity,
+  createWeather,
+  updateWeather,
+  deleteWeather,
 };
