@@ -4,6 +4,7 @@ const cors =require("cors");
 const connectDB = require("./config/db");
 const {connectRedis} = require("./config/redis");
 const weatherRoutes = require("./routes/weatherRoutes");
+const authRoutes    = require("./routes/authRoutes");
 
 
 
@@ -24,7 +25,7 @@ app.get("/",(req,res)=>{
 });
 
 
-
+app.use("/api/auth",    authRoutes);
 app.use("/api/weather", weatherRoutes);
 
 
