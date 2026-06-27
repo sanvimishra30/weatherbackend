@@ -3,7 +3,7 @@ const {fetchAllWeather,
     createWeatherRecord,
     updateWeatherRecord,
     deleteWeatherRecord
-}= require("../services/weatherservice");
+}= require("../services/weatherService");
 
 const {checkValidation} = require("../middleware/weatherValidation");
 
@@ -20,6 +20,7 @@ const getAllWeather = async (req, res) => {
         });
 
         } catch(error){
+            console.error("getAllWeather ERROR:", error.message);
             res.status(500).json({
                 success:false,
                 message:"failed to fetch data",
@@ -52,6 +53,7 @@ const getWeatherByCity = async (req,res) =>{
         
     }
         catch(error){
+            console.error("getAllWeatherByCity ERROR:", error.message);
             res.status(500).json({
                 success:false,
                 message:"failed to fetch data",
@@ -67,7 +69,7 @@ const createWeather = async(req,res)=>{
         if(failed) return ;
 
     try{
-        const weather = await createWeatherRecord(req,res);
+        const weather = await createWeatherRecord(req.body);
         res.status(201).json({
             success:true,
             message:"Weather record created",
@@ -75,6 +77,7 @@ const createWeather = async(req,res)=>{
         });
     }
     catch(error){
+        console.error("CreateWeather ERROR:", error.message);
         if(error.code === 11000){
             return res.status(409).json({
                 success:false,
@@ -83,14 +86,14 @@ const createWeather = async(req,res)=>{
             });
         }
             res.status(500).json({
-                susscess:false,
-                mesage:"failed to create weather record",
+                success:false,
+                message:"failed to create weather record",
             });
         
     }
 };
 
-const updateWeather = async(req,res)=>{
+const updateWeather = async(req,res) => {
     const failed = await checkValidation(req,res);
 
     if(failed) return ;
@@ -114,6 +117,7 @@ const updateWeather = async(req,res)=>{
 
     }
     catch(error){
+        console.error("UpdateWeather ERROR:", error.message);
         if(error.name === "ValidationError"){
             const messages= Object.values(error.values).map((e)=>e.message);
             return res.status(400).json({
@@ -151,6 +155,7 @@ const deleteWeather = async(req,res)=>{
 
     }
     catch(error){
+        console.error("DeleteWeather ERROR:", error.message);
         res.status(500).json({
             success: false,
             message: "Failed to delete weather record"

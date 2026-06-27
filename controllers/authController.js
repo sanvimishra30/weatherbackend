@@ -16,6 +16,7 @@ const register = async(req,res) =>{
         });
     }
     catch(error){
+        console.error("REGISTER ERROR:", error);
         if (error.code === 11000) {
         return res.status(409).json({
         success: false,
@@ -32,7 +33,7 @@ const register = async(req,res) =>{
 
 
 const login = async(req,res) =>{
-    const failed = checkValidation(req,body);
+    const failed = checkValidation(req.body);
     if(failed) return ;
 
     try{
@@ -52,6 +53,7 @@ const login = async(req,res) =>{
     });
     }
     catch(error){
+        console.error("LOGIN ERROR:", error);
         res.status(500).json({
         success: false,
         message: "Login failed",
