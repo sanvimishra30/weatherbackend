@@ -10,8 +10,10 @@ const allKey  = "weather:all";
 const fetchAllWeather = async () => {
     try {
     const redis = getRedisClient();
+    console.log("REDIS OBJECT:", redis ? "EXISTS" : "NULL");
     if (redis) {
         const cached = await redis.get(allKey);
+        console.log("CACHED VALUE:", cached);
         if (cached) {
             return { data: JSON.parse(cached), fromCache: true };
             }
@@ -21,11 +23,13 @@ const fetchAllWeather = async () => {
     }
 
     const data = await Weather.find().sort({ city: 1 });
+    console.log("FETCHED FROM DB:", data.length, "records");
 
     try {
     const redis = getRedisClient();
     if (redis) {
     await redis.set(allKey, JSON.stringify(data), "EX", CACHE_TTL);
+    console.log("SAVED TO REDIS:", allKey);
     }
     } catch (err) {
     console.error("Redis set error:", err.message);

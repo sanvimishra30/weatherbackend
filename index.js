@@ -7,6 +7,8 @@ const {connectRedis} = require("./config/redis");
 const weatherRoutes = require("./routes/weatherRoutes");
 const authRoutes    = require("./routes/authRoutes");
 const {generalLimiter}= require("./middleware/rateLimiter");
+const logger = require ("./utils/logger");
+const morganLogger = require("./middleware/morganLogger");
 
 
 
@@ -24,6 +26,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(morganLogger);
 
 app.use(generalLimiter);
 
@@ -44,7 +47,7 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err.message);
+  logger.error("Unhandled error:", err.message);
   res.status(500).json({ success: false, message: "Something went wrong" });//
 });
 
@@ -52,8 +55,19 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>{
-    console.log(` Server running on http://localhost:${PORT}` );
+    logger.info(` Server running on http://localhost:${PORT}` );
 });
 
+
+
+process.on("unhandledRejection", (reason) => {
+  logger.error(`Unhandled Rejection: ${reason}`);
+  process.exit(1);
+});
+
+process.on("uncaughtException", (err) => {
+  logger.error(`Uncaught Exception: ${err.message}`);
+  process.exit(1);
+});
 
 

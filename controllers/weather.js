@@ -9,13 +9,13 @@ const {checkValidation} = require("../middleware/weatherValidation");
 
 const getAllWeather = async (req, res) => {
     try{
-        const{Data,fromCache} = await fetchAllWeather();
+        const{data,fromCache} = await fetchAllWeather();
         
         res.status(200).json({
             success:true,
             message:"all weather record fetched",
             fromCache,
-            count:Data.length,
+            count:data.length,
             data,
         });
 
@@ -32,13 +32,13 @@ const getAllWeather = async (req, res) => {
 
 const getWeatherByCity = async (req,res) =>{
     try{
-        const city = req.param.city.toLowerCase();
+        const city = req.params.city.toLowerCase();
         const result = await fetchWeatherByCity(city);
 
         if(!result){
             return res.status(404).json({
                 success:false,
-                message:"no weather data found for ${req.params.city}",
+                message:`no weather data found for "${req.params.city}"`,
 
             });
 
@@ -99,7 +99,7 @@ const updateWeather = async(req,res) => {
     if(failed) return ;
 
     try{
-        const city = req.param.city.toLowerCase();
+        const city = req.params.city.toLowerCase();
         const weather = await updateWeatherRecord(city,req.body);
 
         if(!weather){
