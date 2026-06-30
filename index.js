@@ -6,6 +6,7 @@ const connectDB = require("./config/db");
 const {connectRedis} = require("./config/redis");
 const weatherRoutes = require("./routes/weatherRoutes");
 const authRoutes    = require("./routes/authRoutes");
+const chatRoutes         = require("./routes/chatRoutes");
 const {generalLimiter}= require("./middleware/rateLimiter");
 const logger = require ("./utils/logger");
 const morganLogger = require("./middleware/morganLogger");
@@ -37,6 +38,7 @@ app.get("/",(req,res)=>{
 
 app.use("/api/auth",    authRoutes);
 app.use("/api/weather", weatherRoutes);
+app.use("/api/chat",    chatRoutes);
 
 
 app.use((req, res) => {
@@ -47,7 +49,7 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  logger.error("Unhandled error:", err.message);
+  logger.error(`Unhandled error:${err.stack}`);
   res.status(500).json({ success: false, message: "Something went wrong" });//
 });
 
