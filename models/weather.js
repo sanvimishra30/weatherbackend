@@ -35,6 +35,10 @@ const weatherSchema = new mongoose.Schema({
     min:0,
 
   },
+  expiresAt: {
+  type: Date,
+  default: null,
+  },
 
 },
 {

@@ -1,9 +1,18 @@
 const Weather      = require("../models/weather");
 const { getRedisClient } = require("../config/redis");
+//const { fetchFromOpenWeather }  = require("./openWeatherService");
+const logger       = require("../utils/logger");
+const openWeatherService = require("./openWeatherService");
+
+console.log("openWeatherService:", openWeatherService);
+
+const { fetchFromOpenWeather } = openWeatherService;
+
+console.log("Type:", typeof fetchFromOpenWeather);
 
 const CACHE_TTL = 60;
 
-const cityKey = (city) => `weather:${city}`;  // ← backticks
+const cityKey = (city) => `weather:${city}`;
 const allKey  = "weather:all";
 
 
@@ -54,19 +63,56 @@ const fetchWeatherByCity = async (city) => {
     console.error("Redis get error:", err.message);
     }
 
-    const data = await Weather.findOne({ city });
-    if (!data) return null;
+    const existingRecord = await Weather.findOne({ city });
+    if (existingRecord) {
+        const  Date = new Date();
 
-    try {
+        const isExpired = existingRecord.expiresAt && existingRecord.expiresAt < Date;
+
+        if (!isExpired){
+            try {
     const redis = getRedisClient();
     if (redis) {
     await redis.set(key, JSON.stringify(data), "EX", CACHE_TTL);
     }
     } catch (err) {
-    console.error("Redis set error:", err.message);
+    logger.error("Redis set error:", err.message);
     }
 
-    return { data, fromCache: false };
+    return { data: existingRecord, fromCache: false };
+
+        }
+        logger.info(`MongoDB record expired for: ${city} — fetching fresh data`);
+    }
+
+    const freshData = await fetchFromOpenWeather(city);
+
+    if(!freshData) return null;
+
+    const updatedRecord = await Weather.findOneAndUpdate(
+        { city },
+        freshData,
+        {
+            new:    true,
+            upsert: true,
+            runValidators: true,
+        });
+
+        try {
+            const redis = getRedisClient();
+            if (redis) {
+                await redis.set(key, JSON.stringify(updatedRecord), "EX", CACHE_TTL);
+                await redis.del(allKey);
+                }
+            }
+            
+            catch (err) {
+            logger.error(`Redis set error: ${err.message}`);
+            }
+        
+        return { data: updatedRecord, fromCache: false };
+
+
 };
 
 
