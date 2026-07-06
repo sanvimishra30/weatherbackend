@@ -35,6 +35,11 @@ const weatherSchema = new mongoose.Schema({
     min:0,
 
   },
+  source: {
+      type:    String,
+      enum:    ["manual", "openweathermap"],
+      default: "manual",
+    },
   expiresAt: {
   type: Date,
   default: null,

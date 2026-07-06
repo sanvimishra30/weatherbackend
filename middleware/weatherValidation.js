@@ -42,7 +42,7 @@ const updateWeatherRules = [
 
   body('temperature')
   .optional()
-  .isNumeric().withMessage("temperture must be a number"),
+  .isNumeric().withMessage("temperature must be a number"),
 
   body('condition')
   .optional()
@@ -58,7 +58,7 @@ const updateWeatherRules = [
 
   body('wind_speed')
   .optional()
-  .isFloat({min:0}).withMessage("windspeed cannot be negative"),
+  .isFloat({min:0}).withMessage("wind speed cannot be negative"),
 
 
 ];
