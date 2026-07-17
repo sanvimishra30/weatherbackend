@@ -1,4 +1,5 @@
 const Weather      = require("../models/weather");
+const WeatherHistory = require("../models/WeatherHistory");
 const { getRedisClient } = require("../config/redis");
 //const { fetchFromOpenWeather }  = require("./openWeatherService");
 const logger       = require("../utils/logger");
@@ -14,6 +15,25 @@ const CACHE_TTL = 60;
 
 const cityKey = (city) => `weather:${city}`;
 const allKey  = "weather:all";
+
+
+const saveWeatherHistory = async (weatherData) => {
+    try {
+    await WeatherHistory.create({
+        city:        weatherData.city,
+        displayName: weatherData.displayName,
+        temperature: weatherData.temperature,
+        humidity:    weatherData.humidity,
+        wind_speed:  weatherData.wind_speed,
+        condition:   weatherData.condition,
+        source:      weatherData.source || "manual",
+        recordedAt:  new Date(),
+    });
+    logger.info(`Weather history saved for: ${weatherData.city}`);
+        } catch (err) {
+    logger.error(`Error saving weather history for ${weatherData.city}: ${err.message}`);
+        }
+    };
 
 
 const fetchAllWeather = async () => {
@@ -70,6 +90,9 @@ const fetchWeatherByCity = async (city) => {
         const isExpired = existingRecord.expiresAt && existingRecord.expiresAt < Date;
 
         if (!isExpired){
+            logger.info(`MongoDB HIT (not expired): ${city}`);
+            
+            await saveWeatherHistory(existingRecord);
             try {
     const redis = getRedisClient();
     if (redis) {
@@ -98,6 +121,8 @@ const fetchWeatherByCity = async (city) => {
             runValidators: true,
         });
 
+        await saveWeatherHistory(updatedRecord);
+
         try {
             const redis = getRedisClient();
             if (redis) {
@@ -118,6 +143,7 @@ const fetchWeatherByCity = async (city) => {
 
 const createWeatherRecord = async (body) => {
     const weather = await Weather.create(body);
+    await saveWeatherHistory(weather);
 
     try {
     const redis = getRedisClient();
@@ -140,6 +166,7 @@ const updateWeatherRecord = async (city, body) => {
     );
 
     if (!weather) return null;
+    await saveWeatherHistory(weather);
 
     try {
     const redis = getRedisClient();

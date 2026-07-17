@@ -1,10 +1,10 @@
-console.log("1. File started");
+// console.log("1. File started");
 
-const axios = require("axios");
+// const axios = require("axios");
 
-const logger = require("../utils/logger");
+// const logger = require("../utils/logger");
 
-console.log("2. Imports completed");
+// console.log("2. Imports completed");
 
 const BASE_URL = "https://api.openweathermap.org/data/2.5/weather";
 

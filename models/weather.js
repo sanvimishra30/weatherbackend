@@ -44,7 +44,11 @@ const weatherSchema = new mongoose.Schema({
   type: Date,
   default: null,
   },
+  
 
+},
+{
+  optimisticConcurrency: true,
 },
 {
 timestamps:true,

@@ -9,6 +9,7 @@ const {connectRedis} = require("./config/redis");
 const weatherRoutes = require("./routes/weatherRoutes");
 const authRoutes    = require("./routes/authRoutes");
 const chatRoutes         = require("./routes/chatRoutes");
+const anomalyRoutes      = require("./routes/anomalyRoutes");
 const {generalLimiter}= require("./middleware/rateLimiter");
 const logger = require ("./utils/logger");
 const morganLogger = require("./middleware/morganLogger");
@@ -50,6 +51,7 @@ app.get("/",(req,res)=>{
 app.use("/api/auth",    authRoutes);
 app.use("/api/weather", weatherRoutes);
 app.use("/api/chat",    chatRoutes);
+//app.use("/api/anomaly", anomalyRoutes);
 
 
 app.use((req, res) => {
@@ -77,14 +79,14 @@ const shutdown = async (signal) => {
   logger.info(`${signal} received — shutting down gracefully`);
 
   server.close(async()=>{
-    logger.info("HTTP srver closed");
+    logger.info("HTTP server closed");
 
 
     const mongoose = require ("mongoose");
     await mongoose.connection.close();
     logger.info("MongoDB connection closed");
 
-    const {getRedisClientredisClient} = require("./config/redis");
+    const {getRedisClient} = require("./config/redis");
     const redis= getRedisClient();
 
     if(redis){
